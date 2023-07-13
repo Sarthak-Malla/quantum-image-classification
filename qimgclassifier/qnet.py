@@ -6,9 +6,7 @@ from torch.autograd import Function
 
 import qiskit
 
-from .config import Config
-
-config = Config()
+from .config import config
 
 class QuantumCircuit:
     """

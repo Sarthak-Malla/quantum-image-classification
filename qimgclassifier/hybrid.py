@@ -1,9 +1,7 @@
 import torch.nn as nn
 
 from .qnet import QuantumCircuit, HybridFunction
-from .config import Config
-
-config = Config()
+from .config import config
 
 class Hybrid(nn.Module):
     def __init__(self, backend, shots, shift) -> None:

@@ -5,10 +5,7 @@ from torchvision import datasets, transforms
 
 import numpy as np
 
-from .config import Config
-
-# declaring hyperparameters and constants
-config = Config()
+from .config import config
 
 def get_train_loader():
     train_loader = torch.utils.data.DataLoader(X_train, batch_size=config.batch_size, shuffle=True)
