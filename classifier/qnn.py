@@ -3,9 +3,12 @@ from qiskit.utils import algorithm_globals
 from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import RealAmplitudes, ZZFeatureMap
 from qiskit_machine_learning.neural_networks import EstimatorQNN
-from qiskit_machine_learning.connectors import TorchConnector
 
-algorithm_globals.random_seed = 1234
+from config import Config
+
+config = Config()
+
+algorithm_globals.random_seed = config.seed
 
 def create_qnn(n_qubits):
     feature_map = ZZFeatureMap(n_qubits)
@@ -26,7 +29,7 @@ def create_qnn(n_qubits):
         input_params=feature_map.parameters,
         weight_params=ansatz.parameters,
         input_gradients=True,
-        observables=observables
+        # observables=observables
     )
     
     return qnn

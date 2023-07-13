@@ -2,26 +2,28 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-from device import device
-from qnet import Net
+import time
 
-from data_load import get_train_loader, get_test_loader, dir_path
+from config import Config
+from qnet import HybridNet, TorchNet
+from data_load import get_train_loader, get_test_loader
 
-model = Net().to(device)
+config = Config()
 
-# load model
-# model.load_state_dict(torch.load(dir_path+'/models/mnist/mnist_single_circuit_4.pth'))
+total_start_time = time.time()
 
-optimizer = optim.Adam(model.parameters(), lr=0.001)
-# loss_func = nn.NLLLoss()
+model = HybridNet().to(config.device)
+
+optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 loss_func = nn.CrossEntropyLoss()
 
 epochs = 20
-print("Training on", device)
+print("Training on", config.device)
 for epoch in range(epochs):
+    epoch_start_time = time.time()
     model.train()
     for batch_idx, (data, target) in enumerate(get_train_loader()):
-        data, target = data.to(device), target.to(device)
+        data, target = data.to(config.device), target.to(config.device)
         optimizer.zero_grad()
         
         # Forward pass
@@ -46,13 +48,18 @@ for epoch in range(epochs):
         correct = 0
         total = 0
         for data, target in get_test_loader():
-            data, target = data.to(device), target.to(device)
+            data, target = data.to(config.device), target.to(config.device)
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
             correct += pred.eq(target.view_as(pred)).sum().item()
             total += data.shape[0]
 
         print('Test accuracy: {:.0f}%'.format(100. * correct / total))
+    
+    print("Epoch time: {:.2f} seconds".format(time.time() - epoch_start_time))
 
     # save model for every epoch
-    torch.save(model.state_dict(), dir_path+'/models/mnist/v1_4_qubit_4_obs/mnist_single_circuit_{}_v1_4_qubit_without_fc_run2.pth'.format(epoch+1))
+    torch.save(model.state_dict(), config.model_path + "_" + str(epoch+1) + ".pth")
+
+print("Total time: {:.2f} seconds".format(time.time() - total_start_time))
+torch.save(model.state_dict(), config.model_path + ".pth")
