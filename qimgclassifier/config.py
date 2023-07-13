@@ -13,10 +13,10 @@ class Config:
         self.num_classes = 10
         self.num_workers = 1
 
-        self.dir_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+        self.dir_path = os.path.dirname(os.path.realpath(__file__))
         self.model_dir = os.path.join(self.dir_path, "models")
         self.model_name = "1_ry_qubit"
-        self.model_path = os.path.join(self.model_dir, self.model_name)
+        self.model_path = os.path.join(self.model_dir, self.dataset, self.model_name)
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -27,6 +27,7 @@ class Config:
         self.shift = np.pi / 2
 
         self.n_qubits = 1
+        self.input_size = 10
         self.quantum_layers = 1
 
-
+config = Config()

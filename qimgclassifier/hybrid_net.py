@@ -10,9 +10,7 @@ from qiskit_machine_learning.connectors import TorchConnector
 from .hybrid import Hybrid
 from .qnn import create_qnn
 
-from .config import Config
-
-config = Config()
+from .config import config
 
 torch.manual_seed(config.seed)
 
@@ -23,14 +21,18 @@ class HybridNet(nn.Module):
     Use this class will facilitate custome Hybrid Architectures with a custom Quantum Neural Network forward and backward pass.
     Utilizes the "Hybrid" class that leverages a custom Function class to allow for custom backward passes, essentially allowing to integrate a quantum circuit into a neural network.
     """
-    def __init__(self):
+    def __init__(self, torch_connector=False):
         super(HybridNet, self).__init__()
         self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
         self.dropout = nn.Dropout2d()
         self.fc1 = nn.Linear(256, 64)
-        self.fc2 = nn.Linear(64, 10)
-        self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(10)]
+        self.fc2 = nn.Linear(64, config.input_size)
+        if (torch_connector):
+            self.fc2 = nn.Linear(64, config.input_size * config.n_qubits)
+            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(10)]
+        else:
+            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(10)]
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -57,9 +59,9 @@ class TorchNet(nn.Module):
         self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
         self.dropout = nn.Dropout2d()
         self.fc1 = nn.Linear(256, 64)
-        self.fc2 = nn.Linear(64, 10)
+        self.fc2 = nn.Linear(64, config.input_size)
         self.hybrid = TorchConnector(create_qnn(config.n_qubits)).to(config.device)
-        self.fc3 = nn.Linear(4, 4)
+        self.fc3 = nn.Linear(10, config.num_classes)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -76,7 +78,7 @@ class TorchNet(nn.Module):
 
 class HybridCIFARNet(nn.Module):
     # implementing a VGG16 architecture 
-    def __init__(self):
+    def __init__(self, torch_connector=False):
         super(HybridNet, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1)
@@ -100,9 +102,13 @@ class HybridCIFARNet(nn.Module):
 
         self.fc14 = nn.Linear(25088, 4096)
         self.fc15 = nn.Linear(4096, 4096)
-        self.fc16 = nn.Linear(4096, 10)
+        self.fc16 = nn.Linear(4096, config.input_size)
 
-        self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2).to(config.device) for _ in range(10)]
+        if (torch_connector):
+            self.fc16 = nn.Linear(64, config.input_size * config.n_qubits)
+            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(10)]
+        else:
+            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(10)]
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
