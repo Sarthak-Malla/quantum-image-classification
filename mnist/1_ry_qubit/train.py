@@ -4,11 +4,11 @@ import torch.nn as nn
 
 import time
 
-from qimgclassifier.config import Config
-from qimgclassifier.hybrid_net import HybridNet, TorchNet
-from qimgclassifier.data_load import get_train_loader, get_test_loader
+from qimgclassifier.config import config
+config.model_name = "1_ry_qubit"
 
-config = Config()
+from qimgclassifier.hybrid_net import HybridNet 
+from qimgclassifier.data_load import get_train_loader, get_test_loader
 
 total_start_time = time.time()
 
@@ -18,6 +18,9 @@ optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 loss_func = nn.CrossEntropyLoss()
 
 epochs = 20
+losses = []
+train_accuracies = []
+test_accuracies = []
 print("Training on", config.device)
 for epoch in range(epochs):
     epoch_start_time = time.time()
@@ -61,5 +64,12 @@ for epoch in range(epochs):
     # save model for every epoch
     torch.save(model.state_dict(), config.model_path + "/model_" + str(epoch+1) + ".pth")
 
+torch.save(model.state_dict(), config.model_path + "/model_final.pth")
+with open("losses.txt", "w") as f:
+    f.write("\n".join(losses))
+with open("train_accuracies.txt", "w") as f:
+    f.write("\n".join(train_accuracies))
+with open("test_accuracies.txt", "w") as f:
+    f.write("\n".join(test_accuracies))
+
 print("Total time: {:.2f} seconds".format(time.time() - total_start_time))
-torch.save(model.state_dict(), config.model_path + "/finalmodel.pth")
