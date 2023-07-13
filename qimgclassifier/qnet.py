@@ -6,7 +6,7 @@ from torch.autograd import Function
 
 import qiskit
 
-from config import Config
+from .config import Config
 
 config = Config()
 
@@ -86,7 +86,7 @@ class HybridFunction(Function):
         expectation_z = []
         for input in inputs:
             expectation_z.append(ctx.quantum_circuit.run(input.tolist()))
-        result = torch.tensor(np.array(expectation_z)).to(device)
+        result = torch.tensor(np.array(expectation_z)).to(config.device)
 
         ctx.save_for_backward(inputs, result)
         return result

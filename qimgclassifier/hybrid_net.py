@@ -1,15 +1,16 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 import qiskit
-
 from qiskit_machine_learning.connectors import TorchConnector
 
-from hybrid import Hybrid
-from qnn import create_qnn
+from .hybrid import Hybrid
+from .qnn import create_qnn
 
-from config import Config
+from .config import Config
 
 config = Config()
 

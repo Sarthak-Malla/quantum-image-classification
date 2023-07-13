@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-from qnet import QuantumCircuit, HybridFunction
-from config import Config
+from .qnet import QuantumCircuit, HybridFunction
+from .config import Config
 
 config = Config()
 

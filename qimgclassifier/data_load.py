@@ -5,17 +5,17 @@ from torchvision import datasets, transforms
 
 import numpy as np
 
-from config import Config
+from .config import Config
 
 # declaring hyperparameters and constants
 config = Config()
 
 def get_train_loader():
-    train_loader = torch.utils.data.DataLoader(X_train, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+    train_loader = torch.utils.data.DataLoader(X_train, batch_size=config.batch_size, shuffle=True)
     return train_loader
 
 def get_test_loader():
-    test_loader = torch.utils.data.DataLoader(X_test, batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+    test_loader = torch.utils.data.DataLoader(X_test, batch_size=config.batch_size, shuffle=True)
     return test_loader
 
 transform_train = transforms.Compose([transforms.Resize((224, 224)), 

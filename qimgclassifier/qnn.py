@@ -4,7 +4,7 @@ from qiskit.quantum_info import SparsePauliOp
 from qiskit.circuit.library import RealAmplitudes, ZZFeatureMap
 from qiskit_machine_learning.neural_networks import EstimatorQNN
 
-from config import Config
+from .config import Config
 
 config = Config()
 

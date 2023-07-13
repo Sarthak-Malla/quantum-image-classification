@@ -4,9 +4,9 @@ import torch.nn as nn
 
 import time
 
-from config import Config
-from qnet import HybridNet, TorchNet
-from data_load import get_train_loader, get_test_loader
+from qimgclassifier.config import Config
+from qimgclassifier.hybrid_net import HybridNet, TorchNet
+from qimgclassifier.data_load import get_train_loader, get_test_loader
 
 config = Config()
 
@@ -59,7 +59,7 @@ for epoch in range(epochs):
     print("Epoch time: {:.2f} seconds".format(time.time() - epoch_start_time))
 
     # save model for every epoch
-    torch.save(model.state_dict(), config.model_path + "_" + str(epoch+1) + ".pth")
+    torch.save(model.state_dict(), config.model_path + "/model_" + str(epoch+1) + ".pth")
 
 print("Total time: {:.2f} seconds".format(time.time() - total_start_time))
-torch.save(model.state_dict(), config.model_path + ".pth")
+torch.save(model.state_dict(), config.model_path + "/finalmodel.pth")
