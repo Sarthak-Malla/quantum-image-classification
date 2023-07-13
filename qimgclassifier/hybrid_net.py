@@ -79,7 +79,7 @@ class TorchNet(nn.Module):
 class HybridCIFARNet(nn.Module):
     # implementing a VGG16 architecture 
     def __init__(self, torch_connector=False):
-        super(HybridNet, self).__init__()
+        super(HybridCIFARNet, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, padding=1)
 
