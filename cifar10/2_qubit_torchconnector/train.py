@@ -5,21 +5,24 @@ import torch.nn as nn
 import time
 
 from qimgclassifier.config import config
+config.dataset = "cifar10"
 config.model_name = "2_qubit_torchconnector"
+config.set_model_path()
 
 from qimgclassifier.hybrid_net import HybridCIFARNet
-from qimgclassifier.data_load import get_train_loader, get_test_loader
+from qimgclassifier.data_load import get_train_loader, get_test_loader, load_data
 
 config.n_qubits = 2 # change the number of qubits
 
 total_start_time = time.time()
 
+X_train, X_test = load_data(config.dataset)
 model = HybridCIFARNet(torch_connector=True).to(config.device)
 
 optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 loss_func = nn.CrossEntropyLoss()
 
-epochs = 20
+epochs = config.num_epochs
 losses = []
 train_accuracies = []
 test_accuracies = []
@@ -27,7 +30,7 @@ print("Training on", config.device)
 for epoch in range(epochs):
     epoch_start_time = time.time()
     model.train()
-    for batch_idx, (data, target) in enumerate(get_train_loader()):
+    for batch_idx, (data, target) in enumerate(get_train_loader(X_train)):
         data, target = data.to(config.device), target.to(config.device)
         optimizer.zero_grad()
         
@@ -45,8 +48,8 @@ for epoch in range(epochs):
         
         if batch_idx % 10 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch+1, batch_idx * len(data), len(get_train_loader().dataset),
-                    100. * batch_idx / len(get_train_loader()), loss.item()))
+                    epoch+1, batch_idx * len(data), len(get_train_loader(X_train).dataset),
+                    100. * batch_idx / len(get_train_loader(X_train)), loss.item()))
     
     losses.append(loss.item())
 
@@ -54,7 +57,7 @@ for epoch in range(epochs):
     with torch.no_grad():
         correct = 0
         total = 0
-        for data, target in get_train_loader():
+        for data, target in get_train_loader(X_train):
             data, target = data.to(config.device), target.to(config.device)
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True)
@@ -67,7 +70,7 @@ for epoch in range(epochs):
     with torch.no_grad():
         correct = 0
         total = 0
-        for data, target in get_test_loader():
+        for data, target in get_test_loader(X_test):
             data, target = data.to(config.device), target.to(config.device)
             output = model(data)
             pred = output.argmax(dim=1, keepdim=True)

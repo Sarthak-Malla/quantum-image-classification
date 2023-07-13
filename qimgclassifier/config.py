@@ -6,7 +6,7 @@ import numpy as np
 # store all the hyperparameters and constants
 class Config:
     def __init__(self):
-        self.num_epochs = 10
+        self.num_epochs = 20
         self.batch_size = 32
         self.learning_rate = 0.001
         self.dataset = "mnist"
@@ -29,5 +29,9 @@ class Config:
         self.n_qubits = 1
         self.input_size = 10
         self.quantum_layers = 1
+    
+    def set_model_path(self):
+        """Must set the dataset and model name before calling this function."""
+        self.model_path = os.path.join(self.model_dir, self.dataset, self.model_name)
 
 config = Config()
