@@ -23,12 +23,14 @@ class Config:
         self.seed = 42
 
         self.backend = "qasm_simulator"
-        self.shots = 100
+        self.shots = 500
         self.shift = np.pi / 2
 
         self.n_qubits = 1
         self.input_size = 10
         self.quantum_layers = 1
+
+        self.batch_norm = False
     
     def set_model_path(self):
         """Must set the dataset and model name before calling this function."""
