@@ -9,6 +9,7 @@ from qiskit_machine_learning.connectors import TorchConnector
 
 from .hybrid import Hybrid
 from .qnn import create_qnn
+from .qnet import QNetFunction, QuantumNetworkCircuit
 
 from .config import config
 
@@ -140,3 +141,63 @@ class HybridCIFARNet(nn.Module):
         x = tuple([hy(x_) for hy, x_ in zip(self.hybrid, x)])
 
         return torch.cat(x, -1)
+    
+class QNet(nn.Module):
+    """
+    Custom PyTorch module implementing neural network layer consisting on a parameterised quantum circuit. Forward and
+    backward passes allow this to be directly integrated into a PyTorch network.
+    For a "vector" input encoding, inputs should be restricted to the range [0,π) so that there is no wrapping of input
+    states round the bloch sphere and extreme value of the input correspond to states with the smallest overlap. If
+    inputs are given outside this range during the forward pass, info level logging will occur.
+    """
+
+    def __init__(self, n_qubits, shots=100, save_statevectors=False):
+        super(QNet, self).__init__()
+
+        self.qnn = QuantumNetworkCircuit(n_qubits)
+
+        self.shots = shots
+
+        num_weights = len(list(self.qnn.ansatz_circuit_parameters))
+        self.quantum_weight = nn.Parameter(torch.Tensor(num_weights))
+
+        self.quantum_weight.data.normal_(std=1. / np.sqrt(n_qubits))
+
+        self.save_statevectors = save_statevectors
+
+    def forward(self, input_vector):
+        return QNetFunction.apply(input_vector, self.quantum_weight, self.qnn, self.shots, self.save_statevectors)
+
+class QuantumNet(nn.Module):
+    """
+    Network Architecture using the QNet module
+    """
+    def __init__(self):
+        super(QuantumNet, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, 3, 1)
+        self.conv2 = nn.Conv2d(32, 64, 3, 1)
+        self.fc1 = nn.Linear(9216, config.input_size)
+        self.bn1d = nn.BatchNorm1d(config.input_size)
+        self.test_network = nn.ModuleList()
+
+        self.test_network.append(QNet(config.input_size, config.shots, save_statevectors=True))
+        self.fc2 = nn.Linear(config.input_size, config.num_classes)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = F.max_pool2d(x, 2)
+        x = torch.flatten(x, 1)
+
+        x = self.fc1(x)
+        if config.batch_norm:
+            x = self.bn1d(x)
+        x = np.pi * torch.sigmoid(x)
+        for f in self.test_network:
+            x = f(x)
+
+        x = self.fc2(x)
+        output = F.log_softmax(x, dim=1)
+        return output
