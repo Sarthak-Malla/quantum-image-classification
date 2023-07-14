@@ -1,3 +1,5 @@
+import numpy as np
+
 from qiskit import QuantumCircuit
 from qiskit.utils import algorithm_globals
 from qiskit.quantum_info import SparsePauliOp
@@ -22,12 +24,28 @@ def create_qnn(n_qubits, add_observables=False):
         """
         obs = []
         I = ["I"] * n_qubits
-        for i in range(config.num_observables):
-            I[i] = "Z"
-            obs.append("".join(I))
-            I[i] = "I"
-        print("Observables: " + obs)
+
+        if (config.num_observables == n_qubits):
+            for i in range(config.num_observables):
+                I[i] = "Z"
+                obs.append("".join(I))
+                I[i] = "I"
+        else:
+            # have config.num_observables random permutation of I and Z for each qubit, but the same observables should not repeat
+            while (len(obs) < config.num_observables):
+                I = ["I"] * n_qubits
+                for j in range(n_qubits):
+                    if (np.random.rand() < 0.5):
+                        I[j] = "Z"
+                obs.append("".join(I))
+                obs = list(set(obs))
+                
+                # avoiding the case where all qubits are measured in the Z basis
+                if ("I"*n_qubits in obs):
+                    obs.remove("I"*n_qubits)
+
         observables = tuple(SparsePauliOp(o) for o in obs)
+        print("Observables: ", obs)
     
     qnn = EstimatorQNN(
         circuit=qc,
