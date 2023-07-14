@@ -5,18 +5,19 @@ import torch.nn as nn
 import time
 
 from qimgclassifier.config import config
-config.model_name = "2_qubit_torchconnector"
+config.dataset = "cifar10"
+config.model_name = "10_observables_z_per_qubit"
+config.num_observables = 10 # will decide the number of output from the qnn
+config.input_size = 4 # will decide the number of qubits
 config.set_model_path()
 
-from qimgclassifier.hybrid_net import HybridNet
+from qimgclassifier.hybrid_net import TorchCIFARNet
 from qimgclassifier.data_load import get_train_loader, get_test_loader, load_data
-
-config.n_qubits = 2 # change the number of qubits
 
 total_start_time = time.time()
 
 X_train, X_test = load_data(config.dataset)
-model = HybridNet(torch_connector=True).to(config.device)
+model = TorchCIFARNet().to(config.device)
 
 optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 loss_func = nn.CrossEntropyLoss()
@@ -49,7 +50,6 @@ for epoch in range(epochs):
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch+1, batch_idx * len(data), len(get_train_loader(X_train).dataset),
                     100. * batch_idx / len(get_train_loader(X_train)), loss.item()))
-    
     losses.append(loss.item())
 
     model.eval()
@@ -65,7 +65,7 @@ for epoch in range(epochs):
         
         print('Train accuracy: {:.0f}%'.format(100. * correct / total))
     train_accuracies.append(100. * correct / total)
-    
+
     with torch.no_grad():
         correct = 0
         total = 0
@@ -78,7 +78,7 @@ for epoch in range(epochs):
 
         print('Test accuracy: {:.0f}%'.format(100. * correct / total))
     test_accuracies.append(100. * correct / total)
-    
+
     print("Epoch time: {:.2f} seconds".format(time.time() - epoch_start_time))
 
     # save model for every epoch

@@ -6,6 +6,7 @@ import time
 
 from qimgclassifier.config import config
 config.model_name = "10_observables_z_per_qubit"
+config.set_model_path()
 
 from qimgclassifier.hybrid_net import TorchNet
 from qimgclassifier.data_load import get_train_loader, get_test_loader, load_data
