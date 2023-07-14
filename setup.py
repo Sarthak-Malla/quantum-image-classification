@@ -24,7 +24,6 @@ setup(
             "qiskit",
             "matplotlib",
             "qiskit_machine_learning",
-            "qiskit_nature",
         ],
         
         keywords= ['python', 
