@@ -29,6 +29,7 @@ class Config:
         self.n_qubits = 1
         self.input_size = 10
         self.quantum_layers = 1
+        self.num_observables = 10
 
         self.batch_norm = False
     

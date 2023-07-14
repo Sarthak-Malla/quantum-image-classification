@@ -31,9 +31,9 @@ class HybridNet(nn.Module):
         self.fc2 = nn.Linear(64, config.input_size)
         if (torch_connector):
             self.fc2 = nn.Linear(64, config.input_size * config.n_qubits)
-            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(10)]
+            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(config.num_classes)]
         else:
-            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(10)]
+            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(config.num_classes)]
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -47,35 +47,6 @@ class HybridNet(nn.Module):
         x = torch.chunk(x, 10, dim=1)
         x = tuple([hy(x_) for hy, x_ in zip(self.hybrid, x)])
         return torch.cat(x, -1)
-
-class TorchNet(nn.Module):
-    """
-    A hybrid quantum - classical convolutional neural network model.
-
-    This network uses the TorchConnector class to integrate a quantum neural network into a classical neural network.
-    """
-    def __init__(self):
-        super(TorchNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
-        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
-        self.dropout = nn.Dropout2d()
-        self.fc1 = nn.Linear(256, 64)
-        self.fc2 = nn.Linear(64, config.input_size)
-        self.hybrid = TorchConnector(create_qnn(config.n_qubits)).to(config.device)
-        self.fc3 = nn.Linear(10, config.num_classes)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.max_pool2d(x, 2)
-        x = F.relu(self.conv2(x))
-        x = F.max_pool2d(x, 2)
-        x = self.dropout(x)
-        x = torch.flatten(x, start_dim=1)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        x = self.hybrid(x)
-        x = self.fc3(x)
-        return x
 
 class HybridCIFARNet(nn.Module):
     # implementing a VGG16 architecture 
@@ -107,9 +78,9 @@ class HybridCIFARNet(nn.Module):
 
         if (torch_connector):
             self.fc16 = nn.Linear(64, config.input_size * config.n_qubits)
-            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(10)]
+            self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(config.num_classes)]
         else:
-            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(10)]
+            self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(config.num_classes)]
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -141,7 +112,109 @@ class HybridCIFARNet(nn.Module):
         x = tuple([hy(x_) for hy, x_ in zip(self.hybrid, x)])
 
         return torch.cat(x, -1)
-    
+
+class TorchNet(nn.Module):
+    """
+    A hybrid quantum - classical convolutional neural network model.
+
+    This network uses the TorchConnector class to integrate a quantum neural network into a classical neural network.
+    """
+    def __init__(self, add_observables=True, with_fc=True):
+        super(TorchNet, self).__init__()
+        self.conv1 = nn.Conv2d(1, 6, kernel_size=5)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        self.dropout = nn.Dropout2d()
+        self.fc1 = nn.Linear(256, 64)
+        self.fc2 = nn.Linear(64, config.input_size)
+        self.hybrid = TorchConnector(create_qnn(config.input_size, add_observables=add_observables)).to(config.device)
+        self.fc3 = nn.Linear(config.num_observables, config.num_classes)
+
+        self.with_fc = with_fc
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
+        x = self.dropout(x)
+        x = torch.flatten(x, start_dim=1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        x = self.hybrid(x)
+        
+        if self.with_fc:
+            x = self.fc3(x)
+        return x
+
+class TorchCIFARNet(nn.Module):
+    """
+    A hybrid quantum - classical convolutional neural network model.
+
+    This network uses the TorchConnector class to integrate a quantum neural network into a classical neural network for the CIFAR-10 dataset using VGG-16.
+    """
+    def __init__(self, add_observables=True, with_fc=True):
+        super(TorchCIFARNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+
+        self.conv5 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.conv6 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv7 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+
+        self.conv8 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.conv9 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv10 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        self.conv11 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv12 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv13 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.fc14 = nn.Linear(25088, 4096)
+        self.fc15 = nn.Linear(4096, 4096)
+        self.fc16 = nn.Linear(4096, config.input_size)
+
+        self.hybrid = TorchConnector(create_qnn(config.input_size, add_observables=add_observables)).to(config.device)
+        self.fc17 = nn.Linear(config.num_observables, config.num_classes)
+
+        self.with_fc = with_fc
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv5(x))
+        x = F.relu(self.conv6(x))
+        x = F.relu(self.conv7(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv8(x))
+        x = F.relu(self.conv9(x))
+        x = F.relu(self.conv10(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv11(x))
+        x = F.relu(self.conv12(x))
+        x = F.relu(self.conv13(x))
+        x = self.maxpool(x)
+        x = x.reshape(x.shape[0], -1)
+        x = F.relu(self.fc14(x))
+        x = F.dropout(x, 0.5) #dropout was included to combat overfitting
+        x = F.relu(self.fc15(x))
+        x = F.dropout(x, 0.5)
+        x = self.fc16(x)
+        x = self.hybrid(x)
+        
+        if self.with_fc:
+            x = self.fc17(x)
+        output = F.log_softmax(x, dim=1)
+        return output
+
 class QNet(nn.Module):
     """
     Custom PyTorch module implementing neural network layer consisting on a parameterised quantum circuit. Forward and
@@ -260,12 +333,12 @@ class QuantumCIFARNet(nn.Module):
         x = F.relu(self.conv12(x))
         x = F.relu(self.conv13(x))
         x = self.maxpool(x)
-        x = torch.flatten(x, start_dim=1)
+        x = x.reshape(x.shape[0], -1)
         x = F.relu(self.fc14(x))
+        x = F.dropout(x, 0.5) #dropout was included to combat overfitting
         x = F.relu(self.fc15(x))
+        x = F.dropout(x, 0.5)
         x = self.fc16(x)
-        if config.batch_norm:
-            x = self.bn1d(x)
         x = np.pi * torch.sigmoid(x)
         for f in self.test_network:
             x = f(x) 
