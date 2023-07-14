@@ -205,3 +205,70 @@ class QuantumNet(nn.Module):
         x = self.fc3(x)
         output = F.log_softmax(x, dim=1)
         return output
+
+class QuantumCIFARNet(nn.Module):
+    """
+    VGG16 Network Architecture using the QNet module 
+    """
+    def __init__(self):
+        super(QuantumCIFARNet, self).__init__()
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(128, 128, kernel_size=3, padding=1)
+
+        self.conv5 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.conv6 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+        self.conv7 = nn.Conv2d(256, 256, kernel_size=3, padding=1)
+
+        self.conv8 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
+        self.conv9 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv10 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        self.conv11 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv12 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+        self.conv13 = nn.Conv2d(512, 512, kernel_size=3, padding=1)
+
+        self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+        self.fc14 = nn.Linear(25088, 4096)
+        self.fc15 = nn.Linear(4096, 4096)
+        self.fc16 = nn.Linear(4096, config.input_size)
+
+        self.test_network = nn.ModuleList()
+
+        self.test_network.append(QNet(config.input_size, config.shots, save_statevectors=True))
+        self.fc17 = nn.Linear(config.input_size, config.num_classes)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv5(x))
+        x = F.relu(self.conv6(x))
+        x = F.relu(self.conv7(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv8(x))
+        x = F.relu(self.conv9(x))
+        x = F.relu(self.conv10(x))
+        x = self.maxpool(x)
+        x = F.relu(self.conv11(x))
+        x = F.relu(self.conv12(x))
+        x = F.relu(self.conv13(x))
+        x = self.maxpool(x)
+        x = torch.flatten(x, start_dim=1)
+        x = F.relu(self.fc14(x))
+        x = F.relu(self.fc15(x))
+        x = self.fc16(x)
+        if config.batch_norm:
+            x = self.bn1d(x)
+        x = np.pi * torch.sigmoid(x)
+        for f in self.test_network:
+            x = f(x) 
+        x = self.fc17(x)
+        output = F.log_softmax(x, dim=1)
+        return output

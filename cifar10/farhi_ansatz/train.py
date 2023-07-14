@@ -5,9 +5,10 @@ import torch.optim as optim
 import time
 
 from qimgclassifier.config import config
+config.dataset = "cifar10"
 config.model_name = "farhi_ansatz"
 
-from qimgclassifier.hybrid_net import QuantumNet
+from qimgclassifier.hybrid_net import QuantumCIFARNet
 from qimgclassifier.data_load import get_train_loader, get_test_loader, load_data
 
 config.input_size = 10 # this will change the number of qubits in the quantum circuit
@@ -15,7 +16,7 @@ config.input_size = 10 # this will change the number of qubits in the quantum ci
 total_start_time = time.time()
 
 X_train, X_test = load_data(config.dataset)
-model = QuantumNet().to(config.device)
+model = QuantumCIFARNet().to(config.device)
 
 optimizer = optim.Adam(model.parameters(), lr=config.learning_rate)
 loss_func = nn.CrossEntropyLoss()
