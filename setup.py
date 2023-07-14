@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.2' 
+VERSION = '1.0.0' 
 DESCRIPTION = 'Quantum Image Classifier'
 
 with open("README.md", "r") as fh:
