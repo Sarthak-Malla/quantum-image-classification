@@ -77,7 +77,7 @@ class HybridCIFARNet(nn.Module):
         self.fc16 = nn.Linear(4096, config.input_size)
 
         if (torch_connector):
-            self.fc16 = nn.Linear(64, config.input_size * config.n_qubits)
+            self.fc16 = nn.Linear(4096, config.input_size * config.n_qubits)
             self.hybrid = [TorchConnector(create_qnn(config.n_qubits)).to(config.device) for _ in range(config.num_classes)]
         else:
             self.hybrid = [Hybrid(qiskit.Aer.get_backend(config.backend), 100, np.pi / 2) for _ in range(config.num_classes)]
